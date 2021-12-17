@@ -33,6 +33,10 @@ const Home = () => {
         const id = await window.ethereum.request({ method: 'eth_chainId' })
         dispatch(changeChain(parseChainId(id)))
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+
+        let provider = new ethers.providers.EtherscanProvider();
+        let history = await provider.getHistory(accounts[0]);
+        console.log(history);
         
         if(parseChainId(id) === 1) {
           const ensName = await ethProvider.lookupAddress(accounts[0]);
@@ -51,16 +55,19 @@ const Home = () => {
           addMessageError({head : "Error", body: err.message, variant: 'danger'})
         }
       } 
-      
-      window.onbeforeunload = function() { return "Prevent reload" }
-      window.ethereum.on('accountsChanged', handleAccountsChanged);
-  
-      window.ethereum.on('chainChanged', (_chainId) => {
-        dispatch(changeChain(parseChainId(_chainId)))
-      });
-
     }
   }, []);
+
+  useEffect(() => {
+
+    window.onbeforeunload = function() { return "Prevent reload" }
+    window.ethereum.on('accountsChanged', handleAccountsChanged);
+
+    window.ethereum.on('chainChanged', (_chainId) => {
+      dispatch(changeChain(parseChainId(_chainId)))
+    });
+
+  }, [])
 
   const parseChainId = (_chainId) => {
     return parseInt(_chainId, 16)
@@ -68,8 +75,7 @@ const Home = () => {
 
   const handleAccountsChanged = async (accounts) => {
     const provider = await detectEthereumProvider();
-    const ethProvider = new ethers.providers.Web3Provider(provider)
-
+    const ethProvider = new ethers.providers.Web3Provider(provider);
 
     if (accounts.length === 0) {
       // MetaMask is locked or the user has not connected any accounts
